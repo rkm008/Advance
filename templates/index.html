@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚀 Media Server</title>
+  <style>
+    :root {
+      --cyan: #00f2ff;
+      --glass: rgba(255, 255, 255, 0.1);
+      --glass-border: rgba(255, 255, 255, 0.2);
+      --accent-glow: 0 0 15px rgba(0, 242, 255, 0.5);
+    }
+
+    @font-face { font-family: 'Orbitron'; src: url('/static/fonts/Orbitron-Regular.ttf'); font-display: swap; }
+    
+    body { 
+      background: radial-gradient(circle at top left, #1a2a6c, #203a43, #0f2027); 
+      background-attachment: fixed;
+      color: #fff; 
+      font-family: 'Orbitron', sans-serif; 
+      text-align: center; 
+      padding: 10px; 
+      margin: 0;
+      min-height: 100vh; 
+    }
+
+    /* Floating Navigation */
+    .admin-nav { position: fixed; top: 15px; right: 15px; display: flex; gap: 10px; z-index: 1000; }
+    .admin-btn { 
+      padding: 8px 16px; 
+      background: var(--glass); 
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      color: var(--cyan); 
+      text-decoration: none; 
+      border-radius: 20px; 
+      font-weight: bold; 
+      font-size: 0.8em; 
+      transition: 0.3s;
+    }
+    .admin-btn:hover { background: var(--cyan); color: #000; box-shadow: var(--accent-glow); }
+    .settings-btn { color: #ffc107; }
+
+    h1 { font-size: 1.8em; margin: 60px 0 20px; text-shadow: var(--accent-glow); letter-spacing: 2px; }
+
+    /* Glassmorphism Upload Box */
+    .upload-box { 
+      margin: 0 auto 30px; 
+      max-width: 400px;
+      padding: 20px; 
+      background: var(--glass);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px; 
+      box-shadow: 0 8px 38px 0 rgba(0, 0, 0, 0.37);
+    }
+    input[type="file"] { width: 100%; margin-bottom: 15px; color: #fff; font-size: 0.9em; }
+    button { 
+      width: 100%;
+      padding: 15px; 
+      border: none; 
+      border-radius: 12px; 
+      background-color: var(--cyan); 
+      color: #000; 
+      font-weight: bold; 
+      cursor: pointer; 
+      font-size: 1.1em;
+      box-shadow: var(--accent-glow);
+    }
+
+    /* Liquid 2-Column Grid */
+    .gallery { 
+      display: grid; 
+      grid-template-columns: repeat(2, 1fr); 
+      gap: 15px; 
+      padding: 10px; 
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    @media (min-width: 768px) {
+      .gallery { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+    }
+
+    /* Glass Card */
+    .card { 
+      background: var(--glass); 
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px; 
+      padding: 10px; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: space-between; 
+      transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+      overflow: hidden;
+      position: relative;
+    }
+    .card:hover { transform: translateY(-5px); border-color: var(--cyan); box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
+
+    .media-container { 
+      width: 100%; 
+      height: 160px; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      overflow: hidden; 
+      border-radius: 12px; 
+      background-color: rgba(0,0,0,0.3); 
+      position: relative; 
+      cursor: pointer;
+    }
+    .card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+    .play-icon { position: absolute; font-size: 3em; color: var(--cyan); opacity: 0.8; pointer-events: none; }
+
+    .file-info { 
+      font-size: 0.75em; 
+      color: #eee; 
+      margin: 10px 0; 
+      white-space: nowrap; 
+      overflow: hidden; 
+      text-overflow: ellipsis; 
+      padding: 0 5px;
+    }
+
+    /* Compact Buttons */
+    .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
+    .btns a { 
+      padding: 8px 4px; 
+      border-radius: 8px; 
+      color: #fff; 
+      font-weight: bold; 
+      text-decoration: none; 
+      font-size: 0.7em;
+      border: 1px solid transparent;
+    }
+    .preview { background: rgba(33, 150, 243, 0.3); border-color: #2196F3 !important; } 
+    .download { background: rgba(76, 175, 80, 0.3); border-color: #4CAF50 !important; } 
+    .delete { 
+      grid-column: span 2; 
+      background: rgba(244, 67, 54, 0.3); 
+      border-color: #f44336 !important;
+      margin-top: 4px;
+    }
+
+    #speedBox { margin-top: 10px; font-size: 0.8em; color: var(--cyan); }
+
+    /* --- LIQUID GLASS MODAL --- */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(15px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 2000; opacity: 0; transition: opacity 0.4s ease;
+    }
+    .modal-overlay.active { display: flex; opacity: 1; }
+
+    .modal-card {
+      background: var(--glass); border: 1px solid var(--cyan);
+      border-radius: 24px; padding: 15px; width: 90%; max-width: 800px;
+      position: relative; box-shadow: 0 0 40px rgba(0, 242, 255, 0.3);
+      transform: scale(0.8); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .modal-overlay.active .modal-card { transform: scale(1); }
+
+    .modal-body video, .modal-body img {
+      width: 100%; border-radius: 15px; max-height: 75vh; object-fit: contain;
+    }
+    .close-modal {
+      position: absolute; top: -45px; right: 0; color: var(--cyan);
+      font-size: 2.5em; cursor: pointer; text-shadow: 0 0 10px var(--cyan);
+    }
+  </style>
+</head>
+<body>
+
+<div class="admin-nav">
+  {% if is_admin %}
+    <a href="{{ url_for('settings') }}" class="admin-btn settings-btn">Settings</a>
+    <a href="{{ url_for('logout') }}" class="admin-btn">Logout</a>
+  {% else %}
+    <a href="{{ url_for('login') }}" class="admin-btn">Admin</a>
+  {% endif %}
+</div>
+
+<h1>🚀 Fast Share 🚀</h1>
+
+<div class="upload-box">
+  <input type="file" id="fileInput" multiple>
+  <button onclick="uploadFiles()">🚀 Upload Files 🚀</button>
+  <div id="speedBox"></div>
+</div>
+
+<div class="gallery">
+{% for item in media_items %}
+  <div class="card">
+    <div class="media-container" onclick="openModal('{{ item.type }}', '{{ url_for('uploaded_file', filename=item.name) }}')">
+      {% if item.type == 'image' %}
+        <img src="{{ url_for('thumb_file', filename=item.thumb) }}?v={{ item.cache_buster }}" loading="lazy">
+      {% elif item.type == 'video' %}
+        <img src="{{ url_for('thumb_file', filename=item.thumb) }}?v={{ item.cache_buster }}" loading="lazy">
+        <span class="play-icon">▶</span>
+      {% else %}
+        <span style="font-size: 3em;">📁</span>
+      {% endif %}
+    </div>
+    <div class="file-info">{{ item.name }}</div>
+    <div class="btns">
+      <a href="{{ url_for('uploaded_file', filename=item.name) }}" class="preview" target="_blank">VIEW</a>
+      <a href="{{ url_for('uploaded_file', filename=item.name) }}" class="download" download>SAVE</a>
+      {% if is_admin %}
+        <a href="{{ url_for('delete_file', folder=item.folder, filename=item.name) }}" class="delete" onclick="return confirm('Confirm Erasure?')">DELETE</a>
+      {% endif %}
+    </div>
+  </div>
+{% endfor %}
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <span class="close-modal" onclick="closeModal()">&times;</span>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+function openModal(type, url) {
+    const overlay = document.getElementById('modalOverlay');
+    const body = document.getElementById('modalBody');
+    
+    body.innerHTML = ''; 
+    if (type === 'video') {
+        body.innerHTML = `<video src="${url}" controls autoplay></video>`;
+    } else if (type === 'image') {
+        body.innerHTML = `<img src="${url}">`;
+    }
+
+    overlay.classList.add('active');
+}
+
+function closeModal() {
+    const overlay = document.getElementById('modalOverlay');
+    const body = document.getElementById('modalBody');
+    overlay.classList.remove('active');
+    // Stop video and clear source after animation
+    setTimeout(() => { body.innerHTML = ''; }, 400); 
+}
+
+function uploadFiles() {
+  const fileInput = document.getElementById("fileInput");
+  const files = fileInput.files; if (!files.length) return;
+  const data = new FormData(); for (let f of files) data.append("images", f);
+  const xhr = new XMLHttpRequest(); const start = Date.now();
+  const speedBox = document.getElementById("speedBox");
+
+  xhr.upload.onprogress = e => { 
+    if (e.lengthComputable) { 
+      const percent = ((e.loaded / e.total) * 100).toFixed(0); 
+      const speed = (e.loaded / ((Date.now() - start) / 1000) / 1024 / 1024).toFixed(2); 
+      speedBox.innerHTML = `UPLOADING: ${percent}% @ ${speed} MB/s`; 
+    }
+  };
+  xhr.onload = () => location.reload(); 
+  xhr.open("POST", "/", true); 
+  xhr.send(data);
+}
+</script>
+</body>
+</html>
